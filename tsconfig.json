@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "outDir": "build",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/*"],
+}

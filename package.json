@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc src/*.ts --outDir build",
+    "build": "tsc",
     "prestart": "yarn build",
     "start": "node build/main.js"
   },
@@ -11,6 +11,8 @@
   "dependencies": {
     "@hapi/hapi": "^20.2.1",
     "@types/hapi": "^18.0.6",
+    "apollo-server-hapi": "^3.4.0",
+    "graphql": "^15.6.1",
     "mongoose": "^6.0.11",
     "nodemon": "^2.0.14",
     "typescript": "^4.4.4"

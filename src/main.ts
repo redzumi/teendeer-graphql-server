@@ -1,6 +1,10 @@
 import { Server } from '@hapi/hapi';
 import * as mongoose from 'mongoose';
+import { ApolloServer, ApolloServerPluginStopHapiServer, gql } from 'apollo-server-hapi';
+
+import graphQLSchema from './graphql/schema';
 import Painting from './models/Painting';
+import PaintingType from './graphql/PaintingType';
 
 type PaintingPOSTRequest = {
   payload: {
@@ -17,7 +21,77 @@ const server = new Server({
   host: 'localhost'
 });
 
+const books = [
+  {
+    title: 'The Awakening',
+    author: 'Kate Chopin',
+  },
+  {
+    title: 'City of Glass',
+    author: 'Paul Auster',
+  },
+];
+
+const resolvers = {
+  Query: {
+    books: () => books,
+    paintings: async (parent, args) => {
+      return await Painting.find();
+    }
+  },
+  Mutation: {
+    addPainting: async (parent, args) => {
+      const { name, url, techniques } = args;
+      const painting = new Painting({
+        name,
+        url,
+        techniques
+      });
+
+      await painting.save();
+      return await Painting.find();
+    }
+  }
+};
+
+const typeDefs = gql`
+  # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
+
+  # This "Book" type defines the queryable fields for every book in our data source.
+  type Book {
+    title: String
+    author: String
+  }
+
+  # The "Query" type is special: it lists all of the available queries that
+  # clients can execute, along with the return type for each. In this
+  # case, the "books" query returns an array of zero or more Books (defined above).
+  type Query {
+    books: [Book]
+    paintings: [Painting]
+  }
+
+  type Painting {
+    id: String
+    name: String
+    url: String
+    techniques: String
+  }
+
+  type Mutation {
+    addPainting(name: String!, url: String!): [Painting]
+  }
+`;
+
 const main = async () => {
+  const apolloServer = new ApolloServer({
+    typeDefs,
+    resolvers,
+    plugins: [
+      ApolloServerPluginStopHapiServer({ hapiServer: server }),
+    ],
+  });
+
   server.route([
     {
       method: 'GET',
@@ -30,7 +104,8 @@ const main = async () => {
       method: 'GET',
       path: '/api/v1/paintings',
       handler: async (requset, reply) => {
-        return Painting.find();
+        // return Painting.find();
+        return `<h1>Test route</h1>`
       }
     },
     {
@@ -60,7 +135,10 @@ const main = async () => {
     }
   });
 
+  await apolloServer.start();
+  await apolloServer.applyMiddleware({ app: server });
   await server.start();
+
   console.log(`Server running at ${server.info.uri}`);
 
   db();
