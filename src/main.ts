@@ -4,6 +4,7 @@ import { ApolloServer, ApolloServerPluginStopHapiServer, gql } from 'apollo-serv
 
 import graphQLSchema from './graphql/schema';
 import Painting from './models/Painting';
+import Note from './models/Note';
 import PaintingType from './graphql/PaintingType';
 
 type PaintingPOSTRequest = {
@@ -18,7 +19,7 @@ const mongoosePath = 'mongodb://localhost:27017/test-db';
 
 const server = new Server({
   port: 4000,
-  host: 'localhost'
+  host: 'localhost',
 });
 
 const books = [
@@ -50,6 +51,16 @@ const resolvers = {
 
       await painting.save();
       return await Painting.find();
+    },
+    addNote: async (parent, args) => {
+      const { title, body } = args;
+      const note = new Note({
+        title,
+        body
+      });
+
+      await note.save();
+      return await Note.find();
     }
   }
 };
@@ -69,6 +80,7 @@ const typeDefs = gql`
   type Query {
     books: [Book]
     paintings: [Painting]
+    notes: [Note]
   }
 
   type Painting {
@@ -78,8 +90,15 @@ const typeDefs = gql`
     techniques: String
   }
 
+  type Note {
+    id: String
+    title: String
+    body: String
+  }
+
   type Mutation {
     addPainting(name: String!, url: String!): [Painting]
+    addNote(title: String!, body: String!): [Note]
   }
 `;
 
@@ -92,55 +111,42 @@ const main = async () => {
     ],
   });
 
-  server.route([
-    {
-      method: 'GET',
-      path: '/',
-      handler: async (requset, reply) => {
-        return `<h1>Test route</h1>`
-      }
-    },
-    {
-      method: 'GET',
-      path: '/api/v1/paintings',
-      handler: async (requset, reply) => {
-        // return Painting.find();
-        return `<h1>Test route</h1>`
-      }
-    },
-    {
-      method: 'POST',
-      path: '/api/v1/paintings',
-      handler: async (requset: PaintingPOSTRequest, reply) => {
-        const { name, url, techniques } = requset.payload;
-        const painting = new Painting({
-          name,
-          url,
-          techniques
-        });
-        return painting.save();
-      }
-    }
-  ]);
-
-  server.route({
-    method: 'POST',
-    path: '/signup',
-    handler: function (request, h) {
-
-      const payload = request.payload;
-
-      // @ts-ignore
-      return `Welcome ${payload.username}!`;
-    }
-  });
+  // server.route([
+  //   {
+  //     method: 'GET',
+  //     path: '/',
+  //     handler: async (requset, reply) => {
+  //       return `<h1>Test route</h1>`
+  //     }
+  //   },
+  //   {
+  //     method: 'GET',
+  //     path: '/api/v1/paintings',
+  //     handler: async (requset, reply) => {
+  //       // return Painting.find();
+  //       return `<h1>Test route</h1>`
+  //     }
+  //   },
+  //   {
+  //     method: 'POST',
+  //     path: '/api/v1/paintings',
+  //     handler: async (requset: PaintingPOSTRequest, reply) => {
+  //       const { name, url, techniques } = requset.payload;
+  //       const painting = new Painting({
+  //         name,
+  //         url,
+  //         techniques
+  //       });
+  //       return painting.save();
+  //     }
+  //   }
+  // ]);
 
   await apolloServer.start();
-  await apolloServer.applyMiddleware({ app: server });
+  await apolloServer.applyMiddleware({ cors: { origin: ['*'] }, app: server });
   await server.start();
 
   console.log(`Server running at ${server.info.uri}`);
-
   db();
 };
 
