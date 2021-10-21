@@ -3,5 +3,5 @@
     "outDir": "build",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/*"],
+  "include": ["src/*", "src/graphql/typeDefs.ts", "src/apollo/server.ts", "src/apollo/oldServer.ts"],
 }
