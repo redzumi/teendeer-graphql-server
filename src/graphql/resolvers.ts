@@ -21,6 +21,15 @@ export const resolvers = (pubsub: PubSub) => ({
 
       await note.save();
       return await Note.find();
+    },
+    editNote: async (parent, args) => {
+      const { id, title, body } = args;
+      const filter = { id };
+      const update = { title, body };
+
+      await Note.findOneAndUpdate(filter, update);
+
+      return await Note.find();
     }
   },
   Subscription: {

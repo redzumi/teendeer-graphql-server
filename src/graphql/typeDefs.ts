@@ -13,6 +13,7 @@ export const typeDefs = gql`
 
   type Mutation {
     addNote(title: String!, body: String!): [Note]
+    editNote(id: String!, title: String!, body: String!): [Note]
   }
 
   type Subscription {
