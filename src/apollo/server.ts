@@ -19,6 +19,14 @@ export const apolloServer = async () => {
     host: 'localhost'
   });
 
+  app.route({
+    method: 'GET',
+    path: '/',
+    handler: async (request, reply) => {
+      return `powered by Hapi server`;
+    }
+  });
+
   const schema = makeExecutableSchema({
     typeDefs,
     resolvers: resolvers(pubsub)
