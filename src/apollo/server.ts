@@ -1,11 +1,12 @@
 import * as mongoose from 'mongoose';
 import { execute, subscribe } from "graphql";
 import { SubscriptionServer } from "subscriptions-transport-ws";
-import { makeExecutableSchema } from "@graphql-tools/schema";
+import { makeExecutableSchema, mergeSchemas } from "@graphql-tools/schema";
 import { Server } from '@hapi/hapi';
 import { ApolloServer, ApolloServerPluginStopHapiServer, gql } from 'apollo-server-hapi';
 import { PubSub } from 'graphql-subscriptions';
 
+import { userSchema } from '../schemas/User';
 import { resolvers } from "../graphql/resolvers";
 import { typeDefs } from "../graphql/typeDefs";
 
@@ -27,13 +28,15 @@ export const apolloServer = async () => {
     }
   });
 
-  const schema = makeExecutableSchema({
+  const defaultSchema = makeExecutableSchema({
     typeDefs,
     resolvers: resolvers(pubsub)
   });
 
+  const graphQlSchema = mergeSchemas({ schemas: [defaultSchema, userSchema] },);
+
   const apolloServer = new ApolloServer({
-    schema,
+    schema: graphQlSchema,
     plugins: [{
       async serverWillStart() {
         return {
@@ -46,12 +49,12 @@ export const apolloServer = async () => {
   });
 
   const subscriptionServer = SubscriptionServer.create(
-    { schema, execute, subscribe },
+    { schema: graphQlSchema, execute, subscribe },
     { server: app.listener, path: apolloServer.graphqlPath }
   );
 
   await apolloServer.start();
-  await apolloServer.applyMiddleware({ cors: { origin: ['*'] }, app: app });
+  await apolloServer.applyMiddleware({ cors: { origin: ['*'], credentials: true }, app: app });
   await app.start();
 
   db();
