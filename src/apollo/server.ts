@@ -5,11 +5,14 @@ import { makeExecutableSchema, mergeSchemas } from "@graphql-tools/schema";
 import { Server } from '@hapi/hapi';
 import { ApolloServer } from 'apollo-server-hapi';
 import { PubSub } from 'graphql-subscriptions';
+import { applyMiddleware } from 'graphql-middleware'
+import { and, or, shield } from 'graphql-shield';
 
 import { userSchema } from '../schemas/User';
 import { resolvers } from "../graphql/resolvers";
 import { typeDefs } from "../graphql/typeDefs";
 import { applyAuthorizationContext } from './utils';
+import { roles } from './roles';
 
 const MONGOOSE_PATH = 'mongodb://localhost:27017/test-db';
 
@@ -34,7 +37,22 @@ export const apolloServer = async () => {
     resolvers: resolvers(pubsub)
   });
 
-  const graphQlSchema = mergeSchemas({ schemas: [defaultSchema, userSchema] },);
+  // TODO: move in another file
+  const permissions = shield({
+    Query: {
+      me: roles.isAuthenticated,
+      notes: and(roles.isAuthenticated, or(roles.isAdmin, roles.isEditor)),
+      userMany: and(roles.isAuthenticated, roles.isAdmin),
+    },
+    Mutation: {
+      addNote: and(roles.isAuthenticated, roles.isOwner),
+    },
+    Note: roles.isAdmin,
+    User: roles.isAuthenticated,
+  })
+
+  const mergedSchema = mergeSchemas({ schemas: [defaultSchema, userSchema] });
+  const graphQlSchema = applyMiddleware(mergedSchema, permissions)
 
   const apolloServer = new ApolloServer({
     schema: graphQlSchema,
