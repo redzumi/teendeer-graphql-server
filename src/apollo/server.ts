@@ -51,7 +51,8 @@ export const apolloServer = async () => {
     context: ({ request }) => {
       if (request?.headers['authorization'])
         return applyAuthorizationContext(request?.headers['authorization']);
-      throw new Error('Missing auth token!');
+      // If we use this throw – studio wont refresh scheme?
+      // throw new Error('Missing auth token!');
     }
   });
 
@@ -65,7 +66,8 @@ export const apolloServer = async () => {
       onConnect: async (connectionParams) => {
         if (connectionParams.authToken)
           return applyAuthorizationContext(connectionParams.authToken);
-        throw new Error('Missing auth token!');
+        // But here it dosent mean?
+        // throw new Error('Missing auth token!');
       }
     },
     { server: app.listener, path: apolloServer.graphqlPath, }
