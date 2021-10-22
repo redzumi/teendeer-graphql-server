@@ -1,8 +1,11 @@
 import { PubSub } from "graphql-subscriptions";
 import Note from "../models/Note";
+import { authenticated } from '../apollo/utils';
 
 export const resolvers = (pubsub: PubSub) => ({
   Query: {
+    me: authenticated((root, args, context) => context.currentUser),
+    serverTime: () => new Date().toDateString(),
     notes: async (parent, args) => {
       return await Note.find();
     }

@@ -1,8 +1,12 @@
 import { gql } from "apollo-server-hapi";
 
 export const typeDefs = gql`
+  type User
+
   type Query {
     notes: [Note]
+    serverTime: String
+    me: User
   }
 
   type Note {

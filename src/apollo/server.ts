@@ -3,17 +3,15 @@ import { execute, subscribe } from "graphql";
 import { SubscriptionServer } from "subscriptions-transport-ws";
 import { makeExecutableSchema, mergeSchemas } from "@graphql-tools/schema";
 import { Server } from '@hapi/hapi';
-import { ApolloServer, AuthenticationError } from 'apollo-server-hapi';
+import { ApolloServer } from 'apollo-server-hapi';
 import { PubSub } from 'graphql-subscriptions';
-import { verify } from 'jsonwebtoken';
 
-import { UserModel, userSchema } from '../schemas/User';
+import { userSchema } from '../schemas/User';
 import { resolvers } from "../graphql/resolvers";
 import { typeDefs } from "../graphql/typeDefs";
-import { Types } from 'mongoose';
+import { applyAuthorizationContext } from './utils';
 
 const MONGOOSE_PATH = 'mongodb://localhost:27017/test-db';
-const JWT_SECRET_KEY = 'secret';
 
 export const apolloServer = async () => {
   const pubsub = new PubSub();
@@ -48,7 +46,13 @@ export const apolloServer = async () => {
           }
         };
       }
-    }]
+    }],
+    // TODO: move into utils?
+    context: ({ request }) => {
+      if (request?.headers['authorization'])
+        return applyAuthorizationContext(request?.headers['authorization']);
+      throw new Error('Missing auth token!');
+    }
   });
 
   // TODO: should be custom context handler or auth?
@@ -58,21 +62,9 @@ export const apolloServer = async () => {
       execute,
       subscribe,
       // TODO: move into utils?
-      onConnect: async (connectionParams, webSocket) => {
-        if (connectionParams.authToken) {
-          const payload = <{ sub: string }>verify(connectionParams.authToken, JWT_SECRET_KEY);
-          const filter = { _id: new Types.ObjectId(payload?.sub) };
-          const user = await UserModel.findOne(filter);
-
-          console.log(`User: ${user.firstName}`);
-
-          if (user) return {
-            currentUser: user,
-          }
-
-          throw new AuthenticationError('Invalid user');
-        }
-
+      onConnect: async (connectionParams) => {
+        if (connectionParams.authToken)
+          return applyAuthorizationContext(connectionParams.authToken);
         throw new Error('Missing auth token!');
       }
     },
