@@ -13,8 +13,8 @@ const UserSchema = new Schema({
   }
 })
 
-const User = model('User', UserSchema);
-const UserTC = composeMongoose(User, {});
+export const UserModel = model('User', UserSchema);
+const UserTC = composeMongoose(UserModel, {});
 
 schemaComposer.Query.addFields({
   userById: UserTC.mongooseResolvers.findById(),

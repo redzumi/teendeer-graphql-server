@@ -3,14 +3,17 @@ import { execute, subscribe } from "graphql";
 import { SubscriptionServer } from "subscriptions-transport-ws";
 import { makeExecutableSchema, mergeSchemas } from "@graphql-tools/schema";
 import { Server } from '@hapi/hapi';
-import { ApolloServer, ApolloServerPluginStopHapiServer, gql } from 'apollo-server-hapi';
+import { ApolloServer, AuthenticationError } from 'apollo-server-hapi';
 import { PubSub } from 'graphql-subscriptions';
+import { verify } from 'jsonwebtoken';
 
-import { userSchema } from '../schemas/User';
+import { UserModel, userSchema } from '../schemas/User';
 import { resolvers } from "../graphql/resolvers";
 import { typeDefs } from "../graphql/typeDefs";
+import { Types } from 'mongoose';
 
-const mongoosePath = 'mongodb://localhost:27017/test-db';
+const MONGOOSE_PATH = 'mongodb://localhost:27017/test-db';
+const JWT_SECRET_KEY = 'secret';
 
 export const apolloServer = async () => {
   const pubsub = new PubSub();
@@ -45,12 +48,35 @@ export const apolloServer = async () => {
           }
         };
       }
-    }],
+    }]
   });
 
+  // TODO: should be custom context handler or auth?
   const subscriptionServer = SubscriptionServer.create(
-    { schema: graphQlSchema, execute, subscribe },
-    { server: app.listener, path: apolloServer.graphqlPath }
+    {
+      schema: graphQlSchema,
+      execute,
+      subscribe,
+      // TODO: move into utils?
+      onConnect: async (connectionParams, webSocket) => {
+        if (connectionParams.authToken) {
+          const payload = <{ sub: string }>verify(connectionParams.authToken, JWT_SECRET_KEY);
+          const filter = { _id: new Types.ObjectId(payload?.sub) };
+          const user = await UserModel.findOne(filter);
+
+          console.log(`User: ${user.firstName}`);
+
+          if (user) return {
+            currentUser: user,
+          }
+
+          throw new AuthenticationError('Invalid user');
+        }
+
+        throw new Error('Missing auth token!');
+      }
+    },
+    { server: app.listener, path: apolloServer.graphqlPath, }
   );
 
   await apolloServer.start();
@@ -61,7 +87,7 @@ export const apolloServer = async () => {
 };
 
 const db = () => {
-  mongoose.connect(mongoosePath);
+  mongoose.connect(MONGOOSE_PATH);
   mongoose.connection.once('open', () => {
     console.log(`Connected to DB`);
   });
