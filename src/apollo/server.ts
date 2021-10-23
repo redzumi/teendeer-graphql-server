@@ -47,7 +47,8 @@ export const apolloServer = async () => {
       userMany: roles.isAuthenticated,
     },
     Mutation: {
-      noteCreateOne: and(roles.isAuthenticated, roles.isOwner),
+      noteCreateOne: and(roles.isAuthenticated),
+      noteUpdateById: and(roles.isAuthenticated, roles.isNoteOwner),
     },
     Note: roles.isAuthenticated,
     User: roles.isAuthenticated,

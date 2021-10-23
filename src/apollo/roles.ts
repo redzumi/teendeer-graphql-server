@@ -12,13 +12,13 @@ export const isEditor = rule({ cache: 'contextual' })(async (parent, args, ctx, 
   return ctx.user.role === 'editor'
 })
 
-export const isOwner = rule()(async (parent, args, ctx, info) => {
-  return ctx.user.items.some((id) => id === parent.id)
+export const isNoteOwner = rule()(async (parent, args, ctx, info) => {
+  return ctx.user.notesIds.some((id) => id === args._id)
 })
 
 export const roles = {
   isAuthenticated,
   isAdmin,
   isEditor,
-  isOwner
+  isNoteOwner
 };
