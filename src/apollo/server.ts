@@ -41,13 +41,13 @@ export const apolloServer = async () => {
   const permissions = shield({
     Query: {
       me: roles.isAuthenticated,
-      notes: and(roles.isAuthenticated, or(roles.isAdmin, roles.isEditor)),
-      userMany: and(roles.isAuthenticated, roles.isAdmin),
+      notes: and(roles.isAuthenticated, roles.isAdmin),
+      userMany: and(roles.isAuthenticated),
     },
     Mutation: {
       addNote: and(roles.isAuthenticated, roles.isOwner),
     },
-    Note: roles.isAdmin,
+    Note: roles.isAuthenticated,
     User: roles.isAuthenticated,
   })
 

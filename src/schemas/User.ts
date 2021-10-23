@@ -10,11 +10,26 @@ const UserSchema = new Schema({
   notes: {
     type: [NoteSchema],
     default: []
+  },
+  friendsIds: {
+    type: [String],
+    default: []
   }
 })
 
 export const UserModel = model('User', UserSchema);
 const UserTC = composeMongoose(UserModel, {});
+
+UserTC.addRelation(
+  'friends',
+  {
+    resolver: () => UserTC.mongooseResolvers.dataLoaderMany(),
+    prepareArgs: {
+      _ids: (source) => source.friendsIds,
+    },
+    projection: { friendsIds: 1 },
+  }
+);
 
 schemaComposer.Query.addFields({
   userById: UserTC.mongooseResolvers.findById(),
