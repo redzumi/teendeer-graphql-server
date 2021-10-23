@@ -1,17 +1,18 @@
 import { model, Schema } from 'mongoose';
-import { NoteSchema } from '../models/Note';
 import { composeMongoose } from 'graphql-compose-mongoose';
 import { schemaComposer } from 'graphql-compose';
+
+import { NoteTC } from './Note';
 
 const UserSchema = new Schema({
   firstName: String,
   secondName: String,
   login: String,
-  notes: {
-    type: [NoteSchema],
+  friendsIds: {
+    type: [String],
     default: []
   },
-  friendsIds: {
+  notesIds: {
     type: [String],
     default: []
   }
@@ -28,6 +29,17 @@ UserTC.addRelation(
       _ids: (source) => source.friendsIds,
     },
     projection: { friendsIds: 1 },
+  }
+);
+
+UserTC.addRelation(
+  'notes',
+  {
+    resolver: () => NoteTC.mongooseResolvers.dataLoaderMany(),
+    prepareArgs: {
+      _ids: (source) => source.notesIds,
+    },
+    projection: { notesIds: 1 },
   }
 );
 

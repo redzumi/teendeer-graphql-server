@@ -6,11 +6,13 @@ import { Server } from '@hapi/hapi';
 import { ApolloServer } from 'apollo-server-hapi';
 import { PubSub } from 'graphql-subscriptions';
 import { applyMiddleware } from 'graphql-middleware'
-import { and, or, shield } from 'graphql-shield';
+import { and, shield } from 'graphql-shield';
 
 import { userSchema } from '../schemas/User';
+import noteSchema from '../schemas/Note';
 import { resolvers } from "../graphql/resolvers";
 import { typeDefs } from "../graphql/typeDefs";
+
 import { applyAuthorizationContext } from './utils';
 import { roles } from './roles';
 
@@ -41,17 +43,17 @@ export const apolloServer = async () => {
   const permissions = shield({
     Query: {
       me: roles.isAuthenticated,
-      notes: and(roles.isAuthenticated, roles.isAdmin),
-      userMany: and(roles.isAuthenticated),
+      noteMany: roles.isAuthenticated,
+      userMany: roles.isAuthenticated,
     },
     Mutation: {
-      addNote: and(roles.isAuthenticated, roles.isOwner),
+      noteCreateOne: and(roles.isAuthenticated, roles.isOwner),
     },
     Note: roles.isAuthenticated,
     User: roles.isAuthenticated,
   })
 
-  const mergedSchema = mergeSchemas({ schemas: [defaultSchema, userSchema] });
+  const mergedSchema = mergeSchemas({ schemas: [defaultSchema, userSchema, noteSchema] });
   const graphQlSchema = applyMiddleware(mergedSchema, permissions)
 
   const apolloServer = new ApolloServer({
