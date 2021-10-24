@@ -52,7 +52,18 @@ schemaComposer.Query.addFields({
 schemaComposer.Mutation.addFields({
   userCreateOne: UserTC.mongooseResolvers.createOne(),
   userUpdateById: UserTC.mongooseResolvers.updateById(),
-  userRemoveById: UserTC.mongooseResolvers.removeById()
+  userRemoveById: UserTC.mongooseResolvers.removeById(),
+  currentUserAddFriend: {
+    type: UserTC,
+    args: { friendId: 'String' },
+    resolve: async (source, args, context, info) => {
+      const user = await UserModel.updateOne(
+        { _id: context.user._id },
+        { $push: { friendsIds: args.friendId } }
+      );
+      return user;
+    }
+  }
 });
 
 export const userSchema = schemaComposer.buildSchema();

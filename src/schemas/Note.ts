@@ -3,6 +3,7 @@ import { composeMongoose } from 'graphql-compose-mongoose';
 import { model, Schema } from 'mongoose';
 
 export const NoteSchema = new Schema({
+  author: String,
   title: String,
   body: String,
 })
