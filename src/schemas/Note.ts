@@ -1,9 +1,9 @@
 import { schemaComposer } from 'graphql-compose';
 import { composeMongoose } from 'graphql-compose-mongoose';
-import { model, Schema } from 'mongoose';
+import { model, Query, Schema } from 'mongoose';
 
 export const NoteSchema = new Schema({
-  author: String,
+  authorId: String,
   title: String,
   body: String,
 })
@@ -17,7 +17,11 @@ export const generateNoteSchema = (pubsub?) => {
       resolvers[k] = resolvers[k].wrapResolve(next => async rp => {
 
         rp.beforeRecordMutate = async (doc, rp) => {
+          const { user } = rp.context
+          doc.authorId = user._id;
+
           pubsub.publish('noteAdded', { noteAdded: doc });
+
           return doc;
         }
 
@@ -31,10 +35,18 @@ export const generateNoteSchema = (pubsub?) => {
     noteById: NoteTC.mongooseResolvers.findById(),
     noteOne: NoteTC.mongooseResolvers.findOne(),
     noteMany: NoteTC.mongooseResolvers.findMany(),
+    currentUserNotes: NoteTC.mongooseResolvers.findMany().wrapResolve((next) => (rp) => {
+      const { user } = rp.context;
+
+      rp.beforeQuery = (query: Query<unknown, unknown>) => {
+        query.where('authorId', user._id);
+      };
+
+      return next(rp);
+    }),
   });
 
   schemaComposer.Mutation.addFields({
-    // noteCreateOne: NoteTC.mongooseResolvers.createOne(),
     noteUpdateById: NoteTC.mongooseResolvers.updateById(),
     noteRemoveById: NoteTC.mongooseResolvers.removeById(),
     ...noteApplyPubSub({
