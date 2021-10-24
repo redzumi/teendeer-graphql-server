@@ -10,17 +10,35 @@ export const NoteSchema = new Schema({
 export const NoteModel = model('Note', NoteSchema);
 export const NoteTC = composeMongoose(NoteModel, {});
 
-schemaComposer.Query.addFields({
-  noteById: NoteTC.mongooseResolvers.findById(),
-  noteOne: NoteTC.mongooseResolvers.findOne(),
-  noteMany: NoteTC.mongooseResolvers.findMany(),
-});
+export const generateNoteSchema = (pubsub?) => {
+  const noteApplyPubSub = (resolvers) => {
+    Object.keys(resolvers).forEach((k) => {
+      resolvers[k] = resolvers[k].wrapResolve(next => async rp => {
 
-schemaComposer.Mutation.addFields({
-  noteCreateOne: NoteTC.mongooseResolvers.createOne(),
-  noteUpdateById: NoteTC.mongooseResolvers.updateById(),
-  noteRemoveById: NoteTC.mongooseResolvers.removeById()
-});
+        rp.beforeRecordMutate = async function (doc, rp) {
+          pubsub.publish('noteAdded', { noteAdded: doc });
+        }
 
-export const noteSchema = schemaComposer.buildSchema();
-export default noteSchema;
+        return next(rp)
+      })
+    })
+    return resolvers
+  };
+
+  schemaComposer.Query.addFields({
+    noteById: NoteTC.mongooseResolvers.findById(),
+    noteOne: NoteTC.mongooseResolvers.findOne(),
+    noteMany: NoteTC.mongooseResolvers.findMany(),
+  });
+
+  schemaComposer.Mutation.addFields({
+    // noteCreateOne: NoteTC.mongooseResolvers.createOne(),
+    noteUpdateById: NoteTC.mongooseResolvers.updateById(),
+    noteRemoveById: NoteTC.mongooseResolvers.removeById(),
+    ...noteApplyPubSub({
+      noteCreateOne: NoteTC.mongooseResolvers.createOne()
+    }),
+  });
+
+  return schemaComposer.buildSchema();
+};

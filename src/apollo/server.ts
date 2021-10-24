@@ -9,7 +9,8 @@ import { applyMiddleware } from 'graphql-middleware'
 import { and, shield } from 'graphql-shield';
 
 import { userSchema } from '../schemas/User';
-import noteSchema from '../schemas/Note';
+import { generateNoteSchema } from '../schemas/Note';
+
 import { resolvers } from "../graphql/resolvers";
 import { typeDefs } from "../graphql/typeDefs";
 
@@ -53,6 +54,9 @@ export const apolloServer = async () => {
     Note: roles.isAuthenticated,
     User: roles.isAuthenticated,
   })
+
+  // TODO: make it better? as generator? factory?
+  const noteSchema = generateNoteSchema(pubsub);
 
   const mergedSchema = mergeSchemas({ schemas: [defaultSchema, userSchema, noteSchema] });
   const graphQlSchema = applyMiddleware(mergedSchema, permissions)
