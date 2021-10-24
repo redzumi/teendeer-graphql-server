@@ -15,8 +15,9 @@ export const generateNoteSchema = (pubsub?) => {
     Object.keys(resolvers).forEach((k) => {
       resolvers[k] = resolvers[k].wrapResolve(next => async rp => {
 
-        rp.beforeRecordMutate = async function (doc, rp) {
+        rp.beforeRecordMutate = async (doc, rp) => {
           pubsub.publish('noteAdded', { noteAdded: doc });
+          return doc;
         }
 
         return next(rp)
