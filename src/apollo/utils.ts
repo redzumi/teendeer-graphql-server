@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import { verify } from 'jsonwebtoken';
 import { AuthenticationError } from 'apollo-server-hapi';
-import { UserModel, userSchema } from '../schemas/User';
+import { UserModel } from '../schemas/User';
 
 const JWT_SECRET_KEY = 'secret';
 

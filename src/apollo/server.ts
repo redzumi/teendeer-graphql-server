@@ -8,11 +8,9 @@ import { PubSub } from 'graphql-subscriptions';
 import { applyMiddleware } from 'graphql-middleware'
 import { and, shield } from 'graphql-shield';
 
-import { userSchema } from '../schemas/User';
-import { generateNoteSchema } from '../schemas/Note';
-
-import { resolvers } from "../graphql/resolvers";
-import { typeDefs } from "../graphql/typeDefs";
+import { buildUserSchema } from '../schemas/User';
+import { buildTalentSchema } from '../schemas/Talent';
+import { buildTaskSchema } from '../schemas/Task';
 
 import { applyAuthorizationContext } from './utils';
 import { roles } from './roles';
@@ -35,11 +33,6 @@ export const apolloServer = async () => {
     }
   });
 
-  const defaultSchema = makeExecutableSchema({
-    typeDefs,
-    resolvers: resolvers(pubsub)
-  });
-
   // TODO: move in another file
   const permissions = shield({
     Query: {
@@ -50,15 +43,21 @@ export const apolloServer = async () => {
     Mutation: {
       noteCreateOne: and(roles.isAuthenticated),
       noteUpdateById: and(roles.isAuthenticated, roles.isAdmin),
+      addFriend: roles.isAuthenticated,
+      addNote: roles.isAuthenticated,
+      addTalent: roles.isAuthenticated
     },
     Note: roles.isAuthenticated,
     User: roles.isAuthenticated,
   })
 
   // TODO: make it better? as generator? factory?
-  const noteSchema = generateNoteSchema(pubsub);
+  const userSchema = buildUserSchema(pubsub);
+  const talentSchema = buildTalentSchema(pubsub);
+  const taskSchema = buildTaskSchema(pubsub);
 
-  const mergedSchema = mergeSchemas({ schemas: [defaultSchema, userSchema, noteSchema] });
+  const schemas = [userSchema, talentSchema, taskSchema];
+  const mergedSchema = mergeSchemas({ schemas });
   const graphQlSchema = applyMiddleware(mergedSchema, permissions)
 
   const apolloServer = new ApolloServer({
