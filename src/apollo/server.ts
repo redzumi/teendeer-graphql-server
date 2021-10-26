@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 import { execute, subscribe } from "graphql";
 import { SubscriptionServer } from "subscriptions-transport-ws";
-import { makeExecutableSchema, mergeSchemas } from "@graphql-tools/schema";
+import { mergeSchemas } from "@graphql-tools/schema";
 import { Server } from '@hapi/hapi';
 import { ApolloServer } from 'apollo-server-hapi';
 import { PubSub } from 'graphql-subscriptions';
@@ -37,17 +37,13 @@ export const apolloServer = async () => {
   const permissions = shield({
     Query: {
       me: roles.isAuthenticated,
-      noteMany: roles.isAuthenticated,
       userMany: roles.isAuthenticated,
+      imAdmin: and(roles.isAuthenticated, roles.isAdmin),
     },
     Mutation: {
-      noteCreateOne: and(roles.isAuthenticated),
-      noteUpdateById: and(roles.isAuthenticated, roles.isAdmin),
       addFriend: roles.isAuthenticated,
-      addNote: roles.isAuthenticated,
       addTalent: roles.isAuthenticated
     },
-    Note: roles.isAuthenticated,
     User: roles.isAuthenticated,
   })
 

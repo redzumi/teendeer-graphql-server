@@ -48,6 +48,7 @@ export const buildUserSchema = (pubsub?) => {
 
   schemaComposer.Query.addFields({
     me: { type: UserTC, args: {}, resolve: (source, args, context) => context.user },
+    imAdmin: { type: 'String', args: {}, resolve: (source, args, context) => ('Yes, you are') },
     userById: UserTC.mongooseResolvers.findById(),
     userOne: UserTC.mongooseResolvers.findOne(),
     userMany: UserTC.mongooseResolvers.findMany(),
