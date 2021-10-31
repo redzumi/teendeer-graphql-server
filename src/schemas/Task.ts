@@ -6,7 +6,7 @@ export const TaskSchema = new Schema({
   name: String,
   description: String,
   reward_cost: Number,
-  talentsIds: [String]
+  challengeId: String
 })
 
 export const TaskModel = model('Task', TaskSchema);
@@ -17,18 +17,12 @@ export const buildTaskSchema = (pubsub?) => {
     taskById: TaskTC.mongooseResolvers.findById(),
     taskOne: TaskTC.mongooseResolvers.findOne(),
     taskMany: TaskTC.mongooseResolvers.findMany(),
-    tasksForUser: TaskTC.mongooseResolvers.findMany().wrapResolve((next) => (rp) => {
-      const { user } = rp.context;
-
-      const talents = <[{ talentId: string, talentExp: number }]> Array.from(user.talents.values());
-      const userTalents = talents.map((talent) => talent?.talentId);
-
-      rp.beforeQuery = (query: Query<unknown, unknown>) => {
-        query.where('talentsIds', { "$in": userTalents });
-      };
-
-      return next(rp);
-    }),
+    tasksByChallenge: {
+      type: [TaskTC], args: { challengeId: 'String' }, resolve: async (source, args, context) => {
+        const tasks = await TaskModel.find({ challengeId: args.challengeId });
+        return tasks;
+      }
+    },
   });
 
   schemaComposer.Mutation.addFields({

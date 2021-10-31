@@ -11,6 +11,8 @@ import { and, shield } from 'graphql-shield';
 import { buildUserSchema } from '../schemas/User';
 import { buildTalentSchema } from '../schemas/Talent';
 import { buildTaskSchema } from '../schemas/Task';
+import { buildChallengeSchema } from '../schemas/Challenge';
+import { buildStepSchema } from '../schemas/Step';
 
 import { applyAuthorizationContext } from './utils';
 import { roles } from './roles';
@@ -51,8 +53,10 @@ export const apolloServer = async () => {
   const userSchema = buildUserSchema(pubsub);
   const talentSchema = buildTalentSchema(pubsub);
   const taskSchema = buildTaskSchema(pubsub);
+  const challengeSchema = buildChallengeSchema(pubsub);
+  const stepSchema = buildStepSchema(pubsub);
 
-  const schemas = [userSchema, talentSchema, taskSchema];
+  const schemas = [userSchema, talentSchema, challengeSchema, taskSchema, stepSchema];
   const mergedSchema = mergeSchemas({ schemas });
   const graphQlSchema = applyMiddleware(mergedSchema, permissions)
 

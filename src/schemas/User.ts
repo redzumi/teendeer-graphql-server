@@ -71,15 +71,6 @@ export const buildUserSchema = (pubsub?) => {
         return user;
       }
     },
-    addNote: {
-      type: UserTC,
-      args: { noteId: 'String', status: 'String' },
-      resolve: async (source, args, context, info) => {
-        const user = await UserModel.findOne({ _id: context.user._id });
-        user.set(`notes.${args.noteId}`, { status: args.status });
-        return await user.save();
-      }
-    },
     addTalent: {
       type: UserTC,
       args: { talentId: 'String' },
