@@ -81,6 +81,19 @@ export const buildUserSchema = (pubsub?) => {
         return user;
       }
     },
+    addTalents: {
+      type: UserTC,
+      args: { talentsIds: ['String'] },
+      resolve: async (source, args, context, info) => {
+        const user = await UserModel.findOne({ _id: context.user._id });
+        user.set(`talents`, {});
+        args.talentsIds.forEach((talentId) => {
+          user.set(`talents.${talentId}`, { talentId, talentExp: 0 });
+        });
+        user.save();
+        return user;
+      }
+    },
     addExpToTalent: {
       type: UserTC,
       args: { talentId: 'String', exp: 'Float' },
