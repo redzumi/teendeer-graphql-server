@@ -16,8 +16,7 @@ import { buildStepSchema } from '../schemas/Step';
 
 import { applyAuthorizationContext } from './utils';
 import { roles } from './roles';
-
-const MONGOOSE_PATH = 'mongodb://localhost:27017/test-db';
+import { MONGOOSE_PATH } from './constants';
 
 export const apolloServer = async () => {
   const pubsub = new PubSub();
@@ -101,12 +100,14 @@ export const apolloServer = async () => {
   await apolloServer.applyMiddleware({ cors: { origin: ['*'], credentials: true }, app: app });
   await app.start();
 
+  console.log(`Server started.`);
+
   db();
 };
 
 const db = () => {
   mongoose.connect(MONGOOSE_PATH);
   mongoose.connection.once('open', () => {
-    console.log(`Connected to DB`);
+    console.log(`Connected to DB.`);
   });
 };
