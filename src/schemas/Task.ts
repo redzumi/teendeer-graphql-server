@@ -19,7 +19,8 @@ export const buildTaskSchema = (pubsub?) => {
     taskMany: TaskTC.mongooseResolvers.findMany(),
     tasksByChallenge: {
       type: [TaskTC], args: { challengeId: 'String' }, resolve: async (source, args, context) => {
-        const tasks = await TaskModel.find({ challengeId: args.challengeId });
+        const filter = args.challengeId ? { challengeId: args.challengeId } : {};
+        const tasks = await TaskModel.find(filter);
         return tasks;
       }
     },
